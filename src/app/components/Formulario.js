@@ -2,6 +2,7 @@ import React, {Component} from 'react'
 import ListaPessoas from './ListaPessoas';
 import './Formulario.css'
 import axios from 'axios'
+
 class Formulario extends Component {
    
     constructor(props){
@@ -44,16 +45,42 @@ class Formulario extends Component {
         this.setState({ senha:event.target.value })
     }
 
-    submitHandle (event){
-        event.preventDefault()
-            axios.post(`http://localhost:3000/pessoas`,{
-                nome:this.state.nome,
-                email: this.state.email,
-                senha: this.state.senha
+    gravar(nome,email,senha){
+        const url = 'http://localhost:3000/pessoas'
+
+        axios.post(url,{
+                nome: nome,
+                email: email,
+                senha: senha
             }).then(res => {
+                this.obterPessoas()
+                this.limparCampos()
+            })   
+    }
+
+    editar(id,pessoa){
+        const url = 'http://localhost:3000/pessoas'
+
+        axios.put(`${url}/${id}` , pessoa).then(res => {
             this.obterPessoas()
             this.limparCampos()
-        })   
+            this.setState({alterarForm:false})
+  
+          })
+          .catch(err => {
+            this.setState({alterarForm:false})
+            console.log(err);
+          });
+    }
+
+    submitHandle (event){
+        event.preventDefault()
+
+        let nome = this.state.nome;
+        let email = this.state.email
+        let senha = this.state.senha
+        
+        this.gravar(nome,email,senha) 
     }
 
     limparCampos() {
@@ -61,36 +88,36 @@ class Formulario extends Component {
     }
 
     async  obterPessoas() {
+        const url = 'http://localhost:3000/pessoas'
 
-        await   axios.get(`http://localhost:3000/pessoas`).then(res =>{
-            // console.log('res', res.data)
+        await   axios.get(url).then(res =>{
             const pessoas = res.data;
 
             this.setState({ pessoas: pessoas })
         }).catch((err) =>{
-            // console.log('err',err)
+            console.log('err',err)
         })
     }
 
     handleRemove (pessoa) {
-        const url = `http://localhost:3000/pessoas/${pessoa.id}`;
+        const url = `http://localhost:3000/pessoas`;
 
-        axios.delete(url).then(res => {
+        axios.delete(`${url}/${pessoa.id}`).then(res => {
             this.obterPessoas()
             this.setState( { pessoas: res.data });
 
           })
           .catch(err => {
-            // console.log(err);
+            console.log(err);
         });
     };
 
+    
+
     submitEdit (event){
-      const url = `http://localhost:3000/pessoas/`;
       
       event.preventDefault()
       const id = this.state.id
-    //   console.log('id',id)
 
       let pessoa = {
         nome:this.state.nome,
@@ -98,17 +125,8 @@ class Formulario extends Component {
         senha:this.state.senha,
       }
 
-      axios.put(url+id , pessoa).then(res => {
-          this.obterPessoas()
-          this.limparCampos()
-          this.setState({alterarForm:false})
+      this.editar(id,pessoa)
 
-        //   console.log('res',res.data)
-        })
-        .catch(err => {
-          this.setState({alterarForm:false})
-        //   console.log(err);
-        });
     };
 
     mudarForm (event){
